@@ -1,6 +1,6 @@
 # Cebu Competitor Monitor
 
-**Status: work in progress.** Collection, snapshots and change detection are built. Alerts, the GEO readiness score, the weekly brief and the dashboard are not built yet.
+**Status: work in progress.** Collection, snapshots and change detection are built. The n8n alert workflows are drafted but not yet tested. The GEO readiness score, the weekly brief and the dashboard are not built yet.
 
 ## The question
 
@@ -14,7 +14,7 @@ The operator in this project is a scenario, not a real client.
 2. **Collect.** A daily GitHub Actions job fetches each page.
 3. **Store.** Every run adds new snapshot rows to Postgres (Supabase). Nothing is overwritten.
 4. **Detect.** SQL window functions compare the run with earlier runs and write tickets: price change, new offer, removed offer.
-5. **Route (planned).** n8n sends big changes to Telegram at once and the rest to a weekly digest.
+5. **Route (drafted).** The scraper posts tickets to n8n, which sends big changes to Telegram at once and the rest to a weekly digest.
 
 ## Scraping rules
 
