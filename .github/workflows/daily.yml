@@ -1,0 +1,30 @@
+name: daily scrape
+
+on:
+  schedule:
+    - cron: "0 22 * * *"   # 6:00 am in Cebu (UTC+8)
+  workflow_dispatch:
+
+concurrency: daily-scrape
+
+jobs:
+  scrape:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      DATABASE_URL: ${{ secrets.DATABASE_URL }}
+      GOOGLE_SHEET_ID: ${{ secrets.GOOGLE_SHEET_ID }}
+      GOOGLE_SERVICE_ACCOUNT_JSON: ${{ secrets.GOOGLE_SERVICE_ACCOUNT_JSON }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+          cache: pip
+      - run: pip install -r requirements.txt
+      - name: Write Google key file
+        if: env.GOOGLE_SERVICE_ACCOUNT_JSON != ''
+        run: |
+          printf '%s' "$GOOGLE_SERVICE_ACCOUNT_JSON" > "$RUNNER_TEMP/google-key.json"
+          echo "GOOGLE_SERVICE_ACCOUNT_FILE=$RUNNER_TEMP/google-key.json" >> "$GITHUB_ENV"
+      - run: python -m monitor.run

@@ -1,0 +1,10 @@
+name,website,page_url,page_type,is_us,crawl_delay_s,active
+Cebu Tours PH,https://www.cebutours.ph,https://www.cebutours.ph/package/mactan-island-hopping/,package,false,1,true
+Cebu Tours PH,https://www.cebutours.ph,https://www.cebutours.ph/package/joiners-mactan-island-hopping/,package,false,1,true
+Cebu Tours PH,https://www.cebutours.ph,https://www.cebutours.ph/package/whale-shark-canyoneering-day-tour/,package,false,1,true
+Cebu Tours PH,https://www.cebutours.ph,https://www.cebutours.ph/package/shared-oslob-whale-shark-badian-canyoneering-in-kawasan-falls/,package,false,1,true
+TripHappy,https://triphappy.ph,https://triphappy.ph/cebu/island-hopping-tours/joiner/,package,false,1,true
+Island Trek Tours,https://www.islandtrektours.com,https://www.islandtrektours.com/whale-shark-watching-canyoneering-day-tour/,package,false,20,true
+Canyoneering Cebu,https://www.canyoneering-cebu.com,https://www.canyoneering-cebu.com/packages,package,false,1,true
+Cebu City Tour,https://cebucitytour.com,https://cebucitytour.com/cebu-tour-packages/whaleshark-canyoneering-tour,package,false,1,true
+The Oslob,https://theoslob.com,https://theoslob.com/canyoneering-combo/,home,false,1,true
