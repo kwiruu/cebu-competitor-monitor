@@ -11,6 +11,16 @@ def test_private_and_shared_stay_separate():
     assert match_existing("Joiners Mactan Island Hopping in Cebu (3 Islands)", existing) is None
 
 
+def test_shared_version_of_a_similar_tour_is_a_separate_offer():
+    # Found on the first live run: these two were merged and one snapshot was lost.
+    existing = ["Oslob Whale Shark Snorkeling + Badian Canyoneering in Kawasan Falls Tour Package"]
+    assert match_existing("SHARED: Whale Shark Snorkeling + Badian Canyoneering in Kawasan Falls", existing) is None
+
+
+def test_different_island_count_is_a_separate_offer():
+    assert match_existing("Mactan Island Hopping (2 Islands)", ["Mactan Island Hopping (3 Islands)"]) is None
+
+
 def test_different_tour_is_new():
     assert match_existing("Kawasan Falls Full Course Canyoneering", ["Mactan Island Hopping"]) is None
 

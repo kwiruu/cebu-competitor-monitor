@@ -36,8 +36,19 @@ def categorize(name: str) -> str:
     return "+".join(tags) if tags else "other"
 
 
+_VARIANT_WORDS = {"shared", "joiner", "private", "group", "premium", "vip", "overnight"}
+
+
+def variant(name: str) -> frozenset[str]:
+    """Words and numbers that make two similar names different products."""
+    tokens = {t.removesuffix("s") if t.startswith("joiner") else t for t in normalize(name).split()}
+    return frozenset(t for t in tokens if t in _VARIANT_WORDS or t.isdigit())
+
+
 def match_existing(name: str, existing: list[str]) -> str | None:
     """Return the stored canonical name this one matches, or None if it is new."""
+    # A shared tour and a private tour are never the same offer, however alike the names.
+    existing = [e for e in existing if variant(e) == variant(name)]
     if not existing:
         return None
     target = normalize(name)
