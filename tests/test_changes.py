@@ -70,3 +70,24 @@ def test_renamed_offer_keeps_its_history(conn):
     assert run(conn, [offer("Island Hopping Joiner Tour 2027", "3200")]) == [
         ("price_change", "Island Hopping Joiner Tour 2026", Decimal("3000.00"), Decimal("3200.00"))
     ]
+
+
+def test_tickets_stay_pending_until_marked_sent(conn):
+    run(conn, [offer("Island Hopping", "3000")])
+    run(conn, [offer("Island Hopping", "2700")])
+    pending = db.pending_tickets(conn)
+    assert [(t["change_type"], t["offer"]) for t in pending] == [("price_change", "Island Hopping")]
+    db.mark_notified(conn, [t["id"] for t in pending])
+    assert db.pending_tickets(conn) == []
+
+
+def test_our_own_prices_and_failed_pages(conn):
+    ours = PageRow("Our Tours", "https://us.test", "https://us.test/tours", "package", True, 1, True)
+    page_id, competitor_id = db.sync_sources(conn, [ours])["https://us.test/tours"]
+    run_id = db.start_run(conn)
+    db.save_page(conn, run_id, page_id, competitor_id, 200, True,
+                 [offer("Mactan Island Hopping", "3500"), offer("Island Hopping Joiner", "3250")], None)
+    assert db.us_prices(conn) == {"island_hopping": Decimal("3250.00")}
+    assert run(conn, [], ok=False) == []
+    last_run = conn.execute("select max(id) from scrape_runs").fetchone()[0]
+    assert [f["competitor"] for f in db.failed_pages(conn, last_run)] == ["Alpha Tours"]

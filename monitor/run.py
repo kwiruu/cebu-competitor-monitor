@@ -11,7 +11,7 @@ import sys
 
 from dotenv import find_dotenv, load_dotenv
 
-from . import db, sources
+from . import db, notify, sources
 from .fetch import PoliteFetcher
 from .parsers import parse_offers
 
@@ -69,6 +69,19 @@ def main(argv=None) -> int:
         print(f"run {run_id} finished: {status}, {len(changes)} changes")
         for c in changes:
             print(f"  {c['change_type']}: {c['competitor']} / {c['offer']}  {c['old_value']} -> {c['new_value']}")
+
+        pending = db.pending_tickets(conn)
+        failed = db.failed_pages(conn, run_id)
+        webhook = os.getenv("N8N_WEBHOOK_URL", "").strip()
+        if not webhook:
+            print(f"N8N_WEBHOOK_URL not set: {len(pending)} tickets stay unsent")
+        elif pending or failed:
+            payload = notify.build_payload(run_id, status, pending, failed, db.us_prices(conn))
+            if notify.send(webhook, payload, os.getenv("N8N_WEBHOOK_SECRET", "")):
+                db.mark_notified(conn, [c["id"] for c in pending])
+                print(f"sent {len(pending)} tickets and {len(failed)} page failures to n8n")
+            else:
+                print("n8n did not accept the tickets; they will be retried on the next run")
         conn.close()
     return 0 if pages_ok else 1
 

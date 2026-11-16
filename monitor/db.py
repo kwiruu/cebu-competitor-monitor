@@ -85,18 +85,47 @@ def detect_changes(conn: psycopg.Connection, run_id: int) -> list[dict]:
     for statement in [s for s in sql.split(";") if s.strip() and not _only_comments(s)]:
         conn.execute(statement, {"run_id": run_id})
     conn.commit()
+    return _tickets(conn, "ch.run_id = %s", (run_id,))
+
+
+def _tickets(conn, where: str, params: tuple) -> list[dict]:
     cur = conn.execute(
-        """select ch.id, c.name as competitor, c.is_us, o.canonical_name as offer, o.category,
-                  ch.change_type, ch.old_value, ch.new_value, ch.pct_change
-           from changes ch
-           join competitors c on c.id = ch.competitor_id
-           join offers o on o.id = ch.offer_id
-           where ch.run_id = %s
-           order by ch.id""",
-        (run_id,),
+        f"""select ch.id, c.name as competitor, c.is_us, o.canonical_name as offer, o.category,
+                   ch.change_type, ch.old_value, ch.new_value, ch.pct_change, ch.detected_at
+            from changes ch
+            join competitors c on c.id = ch.competitor_id
+            join offers o on o.id = ch.offer_id
+            where {where}
+            order by ch.id""",
+        params,
     )
     columns = [d.name for d in cur.description]
     return [dict(zip(columns, row)) for row in cur.fetchall()]
+
+
+def pending_tickets(conn) -> list[dict]:
+    """Tickets n8n has not accepted yet, including any left over from an earlier run."""
+    return _tickets(conn, "ch.notified_at is null", ())
+
+
+def mark_notified(conn, change_ids: list[int]):
+    conn.execute("update changes set notified_at = now() where id = any(%s)", (change_ids,))
+    conn.commit()
+
+
+def us_prices(conn) -> dict:
+    """Our own cheapest current price per category (rows flagged is_us)."""
+    rows = conn.execute(
+        "select category, min(price) from v_latest_prices where is_us and currency = 'PHP' group by category")
+    return dict(rows.fetchall())
+
+
+def failed_pages(conn, run_id: int) -> list[dict]:
+    rows = conn.execute(
+        """select c.name, p.url, pf.error from page_fetches pf
+           join pages p on p.id = pf.page_id join competitors c on c.id = p.competitor_id
+           where pf.run_id = %s and not pf.ok order by p.id""", (run_id,))
+    return [{"competitor": r[0], "url": r[1], "error": r[2]} for r in rows.fetchall()]
 
 
 def _only_comments(statement: str) -> bool:

@@ -72,8 +72,10 @@ create table if not exists changes (
     status        text not null default 'new',
     decision      text,                             -- match_price | watch | ignore
     detected_at   timestamptz not null default now(),
+    notified_at   timestamptz,                      -- set once n8n has accepted the ticket
     unique (run_id, offer_id, change_type)
 );
+alter table changes add column if not exists notified_at timestamptz;
 
 -- Used by later steps (GEO score, mention sample, weekly brief).
 create table if not exists geo_scores (
